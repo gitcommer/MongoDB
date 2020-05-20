@@ -1,0 +1,370 @@
+20 May 2020
+https://www.youtube.com/watch?v=9OPP_1eAENg&list=PL4cUxeGkcC9jpvoYriLI0bY8DOgWZfi6u
+
+Notes
+1.Installing MongoDB Locally
+3.Connecting to MongoDB - connect to mongo db, success and error message
+4.Model and Collections(db table)
+5.Intro to Mocha Testing - use to test ur database(crud)
+6.Insert or Saving Data to MongoDB
+7.Connect to DB using ES6 Promises
+8.Robomongo - ui or display rani siya sa mongo db, pero and code crud kay naa gihapon ni mocha
+            - same sa php code unya ang display kay naa sa apache mysql
+9.Dropping a Collections or deleting a table
+10.Finding or Search Records
+11.Object ID - like selecting specific id
+12.Deleting Records
+13.Updating Record - select the record that you want to update
+14.Updating Operators - like 0 to 1
+15.Relational Data
+16.Nesting Sub Documents
+
+Notes
+--------------------------------------------------------------------------------
+NoSql - instead storing data in table, store in objects
+MEAN - Mongo, Express, Angular, Node
+Collection - or table in mySQL
+
+1.Installing MongoDB Locally
+--------------------------------------------------------------------------------
+1.create folders c:/data/db                               //mongo automatically install here
+2.C:\Program Files\MongoDB\Server\4.2\bin\mongo.exe
+3.project/npm init --yes                                  //para dili na siya mo ask og mga questions
+4.project/npm install mongoose --save                     //basta mo install ka ani kay mo install sad siya og node_modules
+
+3.Connecting to MongoDB - connect to mongo db, success and error message
+--------------------------------------------------------------------------------
+1.project/test/connection.js
+
+    const mongoose = require('mongoose');                                           //1.connect - module
+
+    mongoose.connect('mongodb://localhost/testaroo');                               //2.connect - connect to testaroo database
+
+    mongoose.connection.once('open', function(){                                    //3.connect - once(), listen to the connection only once
+        console.log('Connection has been made, now make fireworks...');
+    }).on('error', function(error){                                                 //4.connect - on(), listen to the error everytime
+        console.log('Connection error:', error);
+    });
+
+    //to run - project> node test/connection.js
+    //       - success message: Connection has been made, now make fireworks...
+
+4.Model and Collections(db table)
+--------------------------------------------------------------------------------
+1.project/models/mariochar.js
+
+    const mongoose = require('mongoose');                                       //module
+    const Schema = mongoose.Schema;                                             //schema or blueprint
+
+    // Create a Schema and a Model
+
+    const MarioCharSchema = new Schema({                                        //schema data character
+        name: String,
+        weight: Number
+    });
+
+    const MarioChar = mongoose.model('mariochar', MarioCharSchema);             //model
+
+    module.exports = MarioChar;
+
+5.Intro to Mocha Testing - use to test ur database(crud)
+--------------------------------------------------------------------------------
+1.project/npm install mocha --save
+2.project/test/demo_test.js
+
+    const mocha = require('mocha');                       //mocha module
+    const assert = require('assert');                     //assert module
+
+    describe('testing mocha', function(){                 //describe our tests
+
+      it('adds numbers that equal to 5', function(){      //create tests
+        assert(2 + 3 === 5);                              //para test rani para makabalo ka sa error sa success and failed
+      });
+    });
+
+//1.package.json - change this part "test": "mocha"
+//2.to run: project> npm run test
+//3.output: Connection has been made, now make fireworks...
+//          1 passing
+
+6.Insert or Saving Data to MongoDB
+--------------------------------------------------------------------------------
+1.project/test/saving_test.js
+
+    const assert = require('assert');                               //assert module
+    const MarioChar = require('../models/mariochar');               //mariochar'.js is the database
+
+    describe('Saving records', function(){                          //describe our tests
+
+      it('Saves a record to the database', function(done){          //create tests
+
+        const char = new MarioChar({                                //data to insert
+          name: 'Mario'
+        });
+
+        char.save().then(function(){                                //insert data to mariochar database
+          assert(!char.isNew);
+          done();
+        });
+      });
+    });
+
+//to run: project> npm run test
+//output: Connection has been made, now make fireworks...
+//        1 passing
+
+7.Connect to DB using ES6 Promises
+--------------------------------------------------------------------------------
+1.project/test/connection.js
+
+    const mongoose = require('mongoose');
+
+    mongoose.Promise = global.Promise;                                              //ES6 Promises
+
+    before(function(done){                                                          //Connect to db before tests run
+
+        mongoose.connect('mongodb://localhost/testaroo');                           //Connect to mongodb
+        mongoose.connection.once('open', function(){
+            console.log('Connection has been made, now make fireworks...');
+            done();
+        }).on('error', function(error){
+            console.log('Connection error:', error);
+        });
+    });
+
+    //to run - project> node test/connection.js
+    //       - success message: Connection has been made, now make fireworks...
+
+8.Robomongo - ui or display rani siya sa mongo db, pero and code crud kay naa gihapon ni mocha
+            - same sa php code unya ang display kay naa sa apache mysql
+--------------------------------------------------------------------------------
+1.download robomongo
+
+9.Dropping a Collections or deleting a table
+--------------------------------------------------------------------------------
+1.project/test/connection.js
+
+    const mongoose = require('mongoose');
+
+    // ES6 Promises
+    mongoose.Promise = global.Promise;
+
+    // Connect to db before tests run
+    before(function(done){
+
+        // Connect to mongodb
+        mongoose.connect('mongodb://localhost/testaroo');
+        mongoose.connection.once('open', function(){
+            console.log('Connection has been made, now make fireworks...');
+            done();
+        }).on('error', function(error){
+            console.log('Connection error:', error);
+        });
+
+    });
+
+    // Drop the characters collection before each test                          //dropping collections
+    beforeEach(function(done){
+        // Drop the collection
+        mongoose.connection.collections.mariochars.drop(function(){
+            done();
+        });
+    });
+
+10.Finding or Search Records
+--------------------------------------------------------------------------------
+1.project/test/finding_test.js
+
+    const assert = require('assert');
+    const MarioChar = require('../models/mariochar');
+
+    // Describe our tests
+    describe('Finding records', function(){                                     //mura rani siyag description kong unsay gusto nimo na mahitabo diri
+
+      // Add a character to the db before each tests
+      beforeEach(function(done){
+        const char = new MarioChar({
+          name: 'Mario'
+        });
+        char.save().then(function(){
+          done();
+        })
+      });
+
+      // Create tests
+      it('Finds a record from the database', function(done){                    //find code
+        MarioChar.findOne({name: 'Mario'}).then(function(result){
+          assert(result.name === 'Mario');
+          done();
+        });
+      });
+    });
+
+11.Object ID - like selecting specific id
+--------------------------------------------------------------------------------
+1.project/test/finding_test.js
+
+    const assert = require('assert');
+    const MarioChar = require('../models/mariochar');
+
+    // Describe our tests
+    describe('Finding records', function(){
+      var char;
+      // Add a character to the db before each tests
+      beforeEach(function(done){
+        char = new MarioChar({
+          name: 'Mario'
+        });
+        char.save().then(function(){
+          done();
+        });
+      });
+
+      // Create tests
+      it('Finds a record from the database', function(done){
+        MarioChar.findOne({name: 'Mario'}).then(function(result){
+          assert(result.name === 'Mario');
+          done();
+        });
+      });
+
+      it('Finds a record by unique id', function(done){                         //finding unique id
+        MarioChar.findOne({_id: char._id}).then(function(result){
+          assert(result._id.toString() === char._id.toString());
+          done();
+        });
+      });
+    });
+
+12.Deleting Records
+--------------------------------------------------------------------------------
+1.project/test/deleting_test.js
+
+    const assert = require('assert');
+    const MarioChar = require('../models/mariochar');
+
+    // Describe our tests
+    describe('Deleting records', function(){
+      var char;
+      // Add a character to the db before each tests
+      beforeEach(function(done){
+        char = new MarioChar({
+          name: 'Mario'
+        });
+        char.save().then(function(){
+          done();
+        });
+      });
+
+      // Create tests
+      it('Deletes a record from the database', function(done){                  //delete code
+        MarioChar.findOneAndRemove({name: 'Mario'}).then(function(){
+          MarioChar.findOne({name: 'Mario'}).then(function(result){
+            assert(result === null);
+            done();
+          });
+        });
+      });
+
+    });
+
+13.Updating Record - select the record that you want to update
+--------------------------------------------------------------------------------
+1.project/test/updating_test.js
+
+    const assert = require('assert');
+    const MarioChar = require('../models/mariochar');
+
+    // Describe our tests
+    describe('Updating records', function(){
+    var char;
+    // Add a character to the db before each tests
+    beforeEach(function(done){
+    char = new MarioChar({
+      name: 'Mario'
+    });
+    char.save().then(function(){
+      done();
+    });
+    });
+
+    // Create tests
+    it('Updates the name of a record', function(done){                                    //updating code
+      MarioChar.findOneAndUpdate({name: 'Mario'}, {name: 'Luigi'}).then(function(){
+          MarioChar.findOne({_id: char._id}).then(function(result){
+              assert(result.name === 'Luigi');
+              done();
+          });
+      });
+    });
+
+    });
+
+14.Updating Operators - like 0 to 1
+--------------------------------------------------------------------------------
+1.project/test/updating_test.js
+
+    const assert = require('assert');
+    const MarioChar = require('../models/mariochar');
+
+    // Describe our tests
+    describe('Updating records', function(){
+      var char;
+      // Add a character to the db before each tests
+      beforeEach(function(done){
+        char = new MarioChar({
+          name: 'Mario',
+          weight: 50
+        });
+        char.save().then(function(){
+          done();
+        });
+      });
+
+      // Create tests
+      it('Updates the name of a record', function(done){
+          MarioChar.findOneAndUpdate({name: 'Mario'}, {name: 'Luigi'}).then(function(){
+              MarioChar.findOne({_id: char._id}).then(function(result){
+                  assert(result.name === 'Luigi');
+                  done();
+              });
+          });
+      });
+
+     it('Adds 1 to the weight of every record', function(done){                 //code
+        MarioChar.update({}, { $inc: { weight: 1 } }).then(function(){
+            MarioChar.findOne({name: 'Mario'}).then(function(record){
+                assert(record.weight === 51);
+                done();
+            });
+        });
+     });
+
+
+    });
+
+15.Relational Data
+--------------------------------------------------------------------------------
+1.project/test/models/authors.js
+
+    const mongoose = require('mongoose');
+    const Schema = mongoose.Schema;
+
+    // Create a Schema and a Model
+
+    const BookSchema = new Schema({
+        title: String,
+        pages: Number
+    });
+
+    const AuthorSchema = new Schema({
+        name: String,
+        books: [BookSchema]
+    });
+
+    const Author = mongoose.model('author', AuthorSchema);
+
+    module.exports = Author;
+
+16.Nesting Sub Documents
+--------------------------------------------------------------------------------
